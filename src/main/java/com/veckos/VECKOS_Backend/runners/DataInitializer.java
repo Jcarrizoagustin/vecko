@@ -49,13 +49,13 @@ public class DataInitializer implements CommandLineRunner {
         // Crear usuario por defecto si no existe
         crearUsuarioAdmin();
 
-        crearUsuario();
+        //crearUsuario();
 
-        crearPlan();
+        //crearPlan();
 
-        crearTurnos();
+        //crearTurnos();
 
-        crearCuenta();
+        //crearCuenta();
     }
 
     public void inicializarRoles() {
