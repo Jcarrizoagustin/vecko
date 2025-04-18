@@ -6,6 +6,7 @@ import com.veckos.VECKOS_Backend.dtos.usuario.UsuarioDto;
 import com.veckos.VECKOS_Backend.dtos.usuario.UsuarioListItemDto;
 import com.veckos.VECKOS_Backend.entities.Inscripcion;
 import com.veckos.VECKOS_Backend.entities.Usuario;
+import com.veckos.VECKOS_Backend.exceptions.BadRequestException;
 import com.veckos.VECKOS_Backend.services.UsuarioService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -89,7 +90,7 @@ public class UsuarioController {
     public ResponseEntity<UsuarioDto> createUsuario(@Valid @RequestBody UsuarioDto usuarioDto) {
         // Verificar si ya existe un usuario con el mismo DNI
         if (usuarioService.existsByDni(usuarioDto.getDni())) {
-            return ResponseEntity.badRequest().build();
+            throw new BadRequestException("El usuario con dni " + usuarioDto.getDni() + " ya existe");
         }
 
         Usuario usuario = convertToEntity(usuarioDto);
