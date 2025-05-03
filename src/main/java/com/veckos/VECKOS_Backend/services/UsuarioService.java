@@ -1,8 +1,12 @@
 package com.veckos.VECKOS_Backend.services;
 
+import com.veckos.VECKOS_Backend.dtos.usuario.UsuarioListItemDto;
+import com.veckos.VECKOS_Backend.entities.EventoAuditoria;
 import com.veckos.VECKOS_Backend.entities.Inscripcion;
 import com.veckos.VECKOS_Backend.entities.Usuario;
+import com.veckos.VECKOS_Backend.enums.AccionEventoAuditoria;
 import com.veckos.VECKOS_Backend.enums.EstadoUsuario;
+import com.veckos.VECKOS_Backend.factories.EventoAuditoriaFactory;
 import com.veckos.VECKOS_Backend.repositories.UsuarioRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,22 +18,28 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class UsuarioService {
 
     @Autowired
     private UsuarioRepository usuarioRepository;
+    @Autowired
+    private EventoAuditoriaService eventoAuditoriaService;
 
-    @Transactional(readOnly = true)
-    public List<Usuario> findAll() {
-        return usuarioRepository.findAll();
+    @Transactional
+    public List<UsuarioListItemDto> obtenerTodosLosUsuarios(){
+        List<Usuario> usuarios = usuarioRepository.findAll();
+        return usuarios.stream()
+                .map(UsuarioListItemDto::new)
+                .collect(Collectors.toList());
     }
 
-    //@Transactional(readOnly = true)
+    @Transactional(readOnly = true)
     public Usuario findById(Long id) {
         return usuarioRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Usuario no encontrado con ID: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Usuario no encontrado"));
     }
 
     @Transactional(readOnly = true)
@@ -42,6 +52,8 @@ public class UsuarioService {
         if (usuario.getId() == null) {
             usuario.setFechaAlta(LocalDateTime.now());
         }
+        EventoAuditoria eventoAuditoria = EventoAuditoriaFactory.crearEvento(AccionEventoAuditoria.REGISTRAR_USUARIO.getDescripcion(),usuario.toString());
+        this.eventoAuditoriaService.guardarEventoAuditoria(eventoAuditoria);
         return usuarioRepository.save(usuario);
     }
 

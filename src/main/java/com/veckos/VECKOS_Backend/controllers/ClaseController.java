@@ -56,6 +56,7 @@ public class ClaseController {
     @GetMapping("/fecha")
     public ResponseEntity<List<ClaseInfoDto>> getClasesByFecha(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fecha) {
+        System.out.println(fecha);
         List<Clase> clases = claseService.findByFechaOrderByHora(fecha);
         List<ClaseInfoDto> clasesDto = clases.stream()
                 .map(ClaseInfoDto::new)

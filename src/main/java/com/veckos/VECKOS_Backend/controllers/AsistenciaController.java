@@ -1,6 +1,7 @@
 package com.veckos.VECKOS_Backend.controllers;
 
 import com.veckos.VECKOS_Backend.dtos.asistencia.AsistenciaInfoDto;
+import com.veckos.VECKOS_Backend.dtos.asistencia.AsistenciaPorClaseRegistrarDto;
 import com.veckos.VECKOS_Backend.dtos.asistencia.AsistenciaRegistrarDto;
 import com.veckos.VECKOS_Backend.entities.Asistencia;
 import com.veckos.VECKOS_Backend.services.AsistenciaService;
@@ -76,8 +77,8 @@ public class AsistenciaController {
     @PostMapping("/clase/{claseId}")
     public ResponseEntity<List<AsistenciaInfoDto>> registrarAsistenciasPorClase(
             @PathVariable Long claseId,
-            @RequestBody List<Long> usuariosPresentes) {
-        List<Asistencia> asistencias = asistenciaService.registrarAsistenciasPorClase(claseId, usuariosPresentes);
+            @RequestBody AsistenciaPorClaseRegistrarDto asistencia) {
+        List<Asistencia> asistencias = asistenciaService.registrarAsistenciasPorClase(claseId, asistencia);
         List<AsistenciaInfoDto> response = asistencias.stream()
                 .map(AsistenciaInfoDto::new).toList();
         return ResponseEntity.ok(response);

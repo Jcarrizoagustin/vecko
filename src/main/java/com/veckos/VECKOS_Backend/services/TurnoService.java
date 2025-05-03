@@ -1,6 +1,9 @@
 package com.veckos.VECKOS_Backend.services;
 
+import com.veckos.VECKOS_Backend.entities.EventoAuditoria;
 import com.veckos.VECKOS_Backend.entities.Turno;
+import com.veckos.VECKOS_Backend.enums.AccionEventoAuditoria;
+import com.veckos.VECKOS_Backend.factories.EventoAuditoriaFactory;
 import com.veckos.VECKOS_Backend.repositories.TurnoRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.DayOfWeek;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 
@@ -17,6 +21,9 @@ public class TurnoService {
 
     @Autowired
     private TurnoRepository turnoRepository;
+
+    @Autowired
+    private EventoAuditoriaService eventoAuditoriaService;
 
     @Transactional(readOnly = true)
     public List<Turno> findAll() {
@@ -43,7 +50,13 @@ public class TurnoService {
                     " a las " +
                     turno.getHora());
         }
+        EventoAuditoria eventoAuditoria = EventoAuditoriaFactory.crearEvento(AccionEventoAuditoria.REGISTRAR_TURNO.getDescripcion(), "Turno: " + determinarDiaSemana(turno.getDiaSemana()) + " " + turno.getHora().toString());
+        eventoAuditoriaService.guardarEventoAuditoria(eventoAuditoria);
         return turnoRepository.save(turno);
+    }
+
+    public void guardarTurno(Turno turno){
+        this.turnoRepository.save(turno);
     }
 
     @Transactional
@@ -98,5 +111,17 @@ public class TurnoService {
     @Transactional(readOnly = true)
     public List<Turno> findAllOrderByOcupacion() {
         return turnoRepository.findAllOrderByOcupacion();
+    }
+
+    private String determinarDiaSemana(DayOfWeek dia){
+        return switch (dia){
+            case MONDAY -> "Lunes";
+            case TUESDAY -> "Martes";
+            case WEDNESDAY -> "Miércoles";
+            case THURSDAY -> "Jueves";
+            case FRIDAY -> "Viernes";
+            case SATURDAY -> "Sábado";
+            case SUNDAY -> "Domingo";
+        };
     }
 }

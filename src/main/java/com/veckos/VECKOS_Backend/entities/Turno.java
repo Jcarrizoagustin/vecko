@@ -49,4 +49,8 @@ public class Turno {
         clases.remove(clase);
         clase.setTurno(null);
     }
+
+    public void removeDetalleInscripcion(DetalleInscripcion detalleInscripcion){
+        detallesInscripcion.remove(detalleInscripcion);
+    }
 }

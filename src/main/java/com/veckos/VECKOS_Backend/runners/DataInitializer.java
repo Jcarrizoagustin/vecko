@@ -7,6 +7,7 @@ import com.veckos.VECKOS_Backend.repositories.TurnoRepository;
 import com.veckos.VECKOS_Backend.repositories.UsuarioRepository;
 import com.veckos.VECKOS_Backend.security.repositories.RolRepository;
 import com.veckos.VECKOS_Backend.security.repositories.UsuarioSistemaRepository;
+import com.veckos.VECKOS_Backend.services.InscripcionService;
 import org.jfree.data.time.Week;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
@@ -41,21 +42,32 @@ public class DataInitializer implements CommandLineRunner {
     @Autowired
     private CuentaRepository cuentaRepository;
 
+    @Autowired
+    private InscripcionService inscripcionService;
+
     @Override
     public void run(String... args) throws Exception {
-        // Crear roles si no existen
-        inicializarRoles();
+        try{
+            // Crear roles si no existen
+            inicializarRoles();
 
-        // Crear usuario por defecto si no existe
-        crearUsuarioAdmin();
+            // Crear usuario por defecto si no existe
+            crearUsuarioAdmin();
 
-        //crearUsuario();
+            crearUsuarioProf();
 
-        //crearPlan();
+            //crearUsuario();
 
-        //crearTurnos();
+            //crearPlan();
 
-        //crearCuenta();
+            //crearTurnos();
+
+            //crearCuenta();
+
+            inscripcionService.completarInscripciones();
+        }catch (Exception ex){
+            System.out.print(ex.getMessage());
+        }
     }
 
     public void inicializarRoles() {
@@ -99,6 +111,38 @@ public class DataInitializer implements CommandLineRunner {
                 // Asignar rol de administrador
                 Set<Rol> roles = new HashSet<>();
                 rolRepository.findByNombre(Rol.RolNombre.ROLE_ADMIN)
+                        .ifPresent(roles::add);
+                admin.setRoles(roles);
+
+                // Guardar usuario
+                usuarioSistemaRepository.save(admin);
+
+                System.out.println("Usuario administrador " + admin.getUsername() +  " creado correctamente.");
+            } catch (Exception e) {
+                System.err.println("Error al crear usuario administrador: " + e.getMessage());
+                e.printStackTrace();
+            }
+        } else {
+            System.out.println("El usuario administrador ya existe en la base de datos.");
+        }
+    }
+
+    public void crearUsuarioProf() {
+        // Verificar si ya existe el usuario admin de forma más directa
+        if (!usuarioSistemaRepository.existsByUsername("profeveckos")) {
+            try {
+                // Crear usuario administrador
+                UsuarioSistema admin = new UsuarioSistema();
+                admin.setNombre("Profesor");
+                admin.setApellido("Veckos");
+                admin.setUsername("profeveckos");
+                admin.setEmail("profeveckos@veckos-gym.com");
+                admin.setPassword(passwordEncoder.encode("Pr1657on!"));
+                admin.setActivo(true);
+
+                // Asignar rol de administrador
+                Set<Rol> roles = new HashSet<>();
+                rolRepository.findByNombre(Rol.RolNombre.ROLE_OPERADOR)
                         .ifPresent(roles::add);
                 admin.setRoles(roles);
 

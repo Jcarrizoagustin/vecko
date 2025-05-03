@@ -1,6 +1,9 @@
 package com.veckos.VECKOS_Backend.services;
 
 import com.veckos.VECKOS_Backend.entities.*;
+import com.veckos.VECKOS_Backend.enums.AccionEventoAuditoria;
+import com.veckos.VECKOS_Backend.factories.EventoAuditoriaFactory;
+import com.veckos.VECKOS_Backend.repositories.DetalleInscripcionRepository;
 import com.veckos.VECKOS_Backend.repositories.InscripcionRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +31,12 @@ public class InscripcionService {
 
     @Autowired
     private ClaseService claseService;
+
+    @Autowired
+    private DetalleInscripcionRepository detalleInscripcionRepository;
+
+    @Autowired
+    private EventoAuditoriaService eventoAuditoriaService;
 
     @Transactional(readOnly = true)
     public List<Inscripcion> findAll() {
@@ -220,7 +229,7 @@ public class InscripcionService {
 
     public boolean verificarInscripcionEstaEnCurso(Inscripcion inscripcion){
         LocalDate hoy = LocalDate.now();
-        boolean estaEnCurso = !hoy.isBefore(inscripcion.getFechaInicio()) && !hoy.isAfter(inscripcion.getFechaFin());
+        boolean estaEnCurso = !hoy.isBefore(inscripcion.getFechaInicio()) && !hoy.isAfter(inscripcion.getFechaFin()) && Inscripcion.EstadoInscripcion.EN_CURSO.equals(inscripcion.getEstadoInscripcion());
         return estaEnCurso;
     }
 
@@ -231,14 +240,88 @@ public class InscripcionService {
         return inscripcionList.size();
     }
 
-    public void completarInscripcion(Long id) {
+    public void completarInscripcion(Long id){
         Inscripcion inscripcion = this.inscripcionRepository.findById(id).get();
-        if(inscripcion.getEstadoPago().equals(Inscripcion.EstadoPago.PAGA) && inscripcion.getEstadoInscripcion().equals(Inscripcion.EstadoInscripcion.EN_CURSO)){
+        completarInscripcion(inscripcion);
+    }
+
+    private void completarInscripcion(Inscripcion inscripcion) {
+        if(inscripcion.getEstadoInscripcion().equals(Inscripcion.EstadoInscripcion.EN_CURSO)){
             inscripcion.setEstadoInscripcion(Inscripcion.EstadoInscripcion.COMPLETADA);
+            cancelarDetalleInscripcion(inscripcion);
+            EventoAuditoria eventoAuditoria = EventoAuditoriaFactory.crearEventoAuditoriaSystem(AccionEventoAuditoria.REGISTRAR_VENCIMIENTO_INSCRIPCION.getDescripcion(), "Se establecio la inscripcion correspondiente a " + inscripcion.getUsuario().getNombre() + " " + inscripcion.getUsuario().getApellido() + " como vencida o completada");
+            eventoAuditoriaService.guardarEventoAuditoria(eventoAuditoria);
             this.inscripcionRepository.save(inscripcion);
         }
         else{
             throw new RuntimeException("ERROR: La inscripcion no se encuentra en condiciones de ser completada");
         }
+    }
+
+    private void cancelarDetalleInscripcion(Inscripcion inscripcion){
+        List<DetalleInscripcion> detalles = inscripcion.getDetalles();
+        for(DetalleInscripcion detalle : detalles){
+            detalle.setTurno(null);
+            detalle.setInscripcion(null);
+            detalleInscripcionRepository.save(detalle);
+        }
+    }
+
+    private void renovarInscripcion(Inscripcion inscripcionAnterior){
+        System.out.println("Se procede a renovar la inscripcion de " + inscripcionAnterior.getUsuario().getNombre());
+        LocalDate hoy = LocalDate.now();
+
+        /*if(!inscripcionAnterior.getEstadoPago().equals(Inscripcion.EstadoPago.PAGA)){
+            throw new RuntimeException("Error: La inscripcion no se encuentra paga, no se puede renovar");
+        }*/
+        //inscripcionAnterior.setEstadoInscripcion(Inscripcion.EstadoInscripcion.COMPLETADA);
+
+        // Crear nueva inscripción basada en la anterior
+        Inscripcion nuevaInscripcion = new Inscripcion();
+        nuevaInscripcion.setUsuario(inscripcionAnterior.getUsuario());
+        nuevaInscripcion.setPlan(inscripcionAnterior.getPlan());
+        nuevaInscripcion.setFrecuencia(inscripcionAnterior.getFrecuencia());
+        nuevaInscripcion.setFechaInicio(hoy);
+        nuevaInscripcion.setFechaFin(hoy.plusMonths(1));
+        nuevaInscripcion.setEstadoPago(Inscripcion.EstadoPago.PENDIENTE);
+        nuevaInscripcion.setEstadoInscripcion(Inscripcion.EstadoInscripcion.EN_CURSO);
+
+        //Inscripcion savedInscripcion = inscripcionRepository.save(nuevaInscripcion);
+
+        // Copiar detalles de inscripción
+        for (DetalleInscripcion detalleAnterior : inscripcionAnterior.getDetalles()) {
+            DetalleInscripcion nuevoDetalle = new DetalleInscripcion();
+            nuevoDetalle.setInscripcion(nuevaInscripcion);
+            nuevoDetalle.setTurno(detalleAnterior.getTurno());
+            nuevoDetalle.setDiaSemana(detalleAnterior.getDiaSemana());
+            nuevaInscripcion.addDetalle(nuevoDetalle);
+        }
+        //inscripcionRepository.save(inscripcionAnterior);
+        Inscripcion inscripcionRenovada = inscripcionRepository.save(nuevaInscripcion);
+
+        // Generar clases para el nuevo período
+        claseService.generarClasesParaInscripcion(inscripcionRenovada);
+
+        EventoAuditoria eventoAuditoria = EventoAuditoriaFactory.crearEventoAuditoriaSystem(AccionEventoAuditoria.REGISTRAR_RENOVACION_INSCRIPCION.getDescripcion(), "Se renueva la inscripcion para el/la alumno/a: " + inscripcionRenovada.getUsuario().getNombre() + " " +  inscripcionRenovada.getUsuario().getApellido());
+        eventoAuditoriaService.guardarEventoAuditoria(eventoAuditoria);
+        System.out.println("Inscripcion de " + inscripcionAnterior.getUsuario().getNombre()  +" renovada con exito");
+    }
+
+    @Transactional
+    public void completarInscripciones(){
+        System.out.println("Se procede a completar las inscripciones");
+        List<Inscripcion> inscripcionesEnCurso = this.inscripcionRepository.findAllByEstadoInscripcion(Inscripcion.EstadoInscripcion.EN_CURSO);
+        LocalDate hoy = LocalDate.now();
+        for (Inscripcion inscripcion : inscripcionesEnCurso) {
+            if (inscripcion.getFechaFin().equals(hoy) || inscripcion.getFechaFin().isBefore(hoy)) {
+                try{
+                    renovarInscripcion(inscripcion);
+                    completarInscripcion(inscripcion);
+                }catch (Exception ex){
+                    System.out.println(ex.getMessage());
+                }
+            }
+        }
+        System.out.println("Inscripciones completadas");
     }
 }

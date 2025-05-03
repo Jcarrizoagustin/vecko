@@ -85,4 +85,17 @@ public class Usuario {
                 .findFirst()
                 .orElse(null);
     }
+
+    @Override
+    public String toString() {
+        return "Usuario{" +
+                "nombre='" + nombre + '\'' +
+                ", apellido='" + apellido + '\'' +
+                ", fechaNacimiento=" + fechaNacimiento +
+                ", dni='" + dni + '\'' +
+                ", cuil='" + cuil + '\'' +
+                ", telefono='" + telefono + '\'' +
+                ", correo='" + correo + '\'' +
+                '}';
+    }
 }

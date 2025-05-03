@@ -21,11 +21,11 @@ public class DetalleInscripcion {
     private Long id;
 
     @ManyToOne
-    @JoinColumn(name = "inscripcion_id", nullable = false)
+    @JoinColumn(name = "inscripcion_id")
     private Inscripcion inscripcion;
 
     @ManyToOne
-    @JoinColumn(name = "turno_id", nullable = false)
+    @JoinColumn(name = "turno_id")
     private Turno turno;
 
     @Enumerated(EnumType.STRING)

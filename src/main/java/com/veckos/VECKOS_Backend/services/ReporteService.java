@@ -8,7 +8,10 @@ import com.veckos.VECKOS_Backend.dtos.reporte.ReporteAsistenciaRequestDto;
 import com.veckos.VECKOS_Backend.dtos.reporte.ReporteFinancieroDto;
 import com.veckos.VECKOS_Backend.entities.Asistencia;
 import com.veckos.VECKOS_Backend.entities.Clase;
+import com.veckos.VECKOS_Backend.entities.EventoAuditoria;
 import com.veckos.VECKOS_Backend.entities.Pago;
+import com.veckos.VECKOS_Backend.enums.AccionEventoAuditoria;
+import com.veckos.VECKOS_Backend.factories.EventoAuditoriaFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -31,6 +34,9 @@ public class ReporteService {
 
     @Autowired
     private PagoService pagoService;
+
+    @Autowired
+    private EventoAuditoriaService eventoAuditoriaService;
 
     public ReporteFinancieroDto generarReporteFinanciero(LocalDate fechaInicio, LocalDate fechaFin,
                                                         boolean agruparPorMes, boolean agruparPorMetodoPago){
@@ -86,7 +92,9 @@ public class ReporteService {
         //reporte.put("pagos", pagos);
         reporteFinancieroDto.setPagos(pagoInfoDtos);
 
-
+        EventoAuditoria eventoAuditoria = EventoAuditoriaFactory.crearEvento(AccionEventoAuditoria.GENERAR_INFORME_FINANCIERO.getDescripcion(),
+                "Periodo: " + fechaInicio.toString() + " - " + fechaFin.toString());
+        eventoAuditoriaService.guardarEventoAuditoria(eventoAuditoria);
         return reporteFinancieroDto;
     }
 

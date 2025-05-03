@@ -1,5 +1,6 @@
 package com.veckos.VECKOS_Backend.services;
 
+import com.veckos.VECKOS_Backend.dtos.asistencia.AsistenciaPorClaseRegistrarDto;
 import com.veckos.VECKOS_Backend.entities.Asistencia;
 import com.veckos.VECKOS_Backend.entities.Clase;
 import com.veckos.VECKOS_Backend.entities.Usuario;
@@ -79,9 +80,12 @@ public class AsistenciaService {
     }
 
     @Transactional
-    public List<Asistencia> registrarAsistenciasPorClase(Long claseId, List<Long> usuariosPresentes) {
+    public List<Asistencia> registrarAsistenciasPorClase(Long claseId, AsistenciaPorClaseRegistrarDto asistenciaDto) {
         // Obtener todos los usuarios con inscripciones activas que deberían asistir a esta clase
         Clase clase = claseService.findById(claseId);
+
+        List<Long> usuariosPresentes = asistenciaDto.getPresentes();
+        List<Long> usuariosAusentes = asistenciaDto.getAusentes();
 
         // Primero, marcar a todos como ausentes
         List<Asistencia> asistencias = asistenciaRepository.findByClaseId(claseId);
@@ -94,6 +98,10 @@ public class AsistenciaService {
         // Luego, marcar a los presentes
         for (Long usuarioId : usuariosPresentes) {
             registrarAsistencia(claseId, usuarioId, true);
+        }
+
+        for (Long usuarioId : usuariosAusentes) {
+            registrarAsistencia(claseId, usuarioId, false);
         }
 
         return asistenciaRepository.findByClaseId(claseId);

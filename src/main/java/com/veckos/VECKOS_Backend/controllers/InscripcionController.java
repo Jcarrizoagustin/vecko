@@ -3,10 +3,9 @@ package com.veckos.VECKOS_Backend.controllers;
 import com.veckos.VECKOS_Backend.dtos.inscripcion.InscripcionCrearDto;
 import com.veckos.VECKOS_Backend.dtos.inscripcion.InscripcionInfoDto;
 import com.veckos.VECKOS_Backend.entities.*;
-import com.veckos.VECKOS_Backend.services.InscripcionService;
-import com.veckos.VECKOS_Backend.services.PlanService;
-import com.veckos.VECKOS_Backend.services.TurnoService;
-import com.veckos.VECKOS_Backend.services.UsuarioService;
+import com.veckos.VECKOS_Backend.enums.AccionEventoAuditoria;
+import com.veckos.VECKOS_Backend.factories.EventoAuditoriaFactory;
+import com.veckos.VECKOS_Backend.services.*;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -34,6 +33,9 @@ public class InscripcionController {
 
     @Autowired
     private TurnoService turnoService;
+
+    @Autowired
+    private EventoAuditoriaService eventoAuditoriaService;
 
     @GetMapping
     public ResponseEntity<List<InscripcionInfoDto>> getAllInscripciones() {
@@ -120,7 +122,8 @@ public class InscripcionController {
             // Guardar inscripción con detalles
             Inscripcion savedInscripcion = inscripcionService.save(inscripcion, detalles);
             InscripcionInfoDto response = new InscripcionInfoDto(savedInscripcion);
-
+            EventoAuditoria eventoAuditoria = EventoAuditoriaFactory.crearEvento(AccionEventoAuditoria.REGISTRAR_NUEVA_INSCRIPCION.getDescripcion(), "Nueva inscripcion para el/la alumno/a: " + response.getNombreUsuario() + " " + response.getApellidoUsuario());
+            eventoAuditoriaService.guardarEventoAuditoria(eventoAuditoria);
             return new ResponseEntity<>(response, HttpStatus.CREATED);
 
         } catch (IllegalArgumentException e) {
@@ -184,6 +187,8 @@ public class InscripcionController {
             // Establecer estado de pago inicial
             nuevaInscripcion.setEstadoPago(Inscripcion.EstadoPago.PENDIENTE);
 
+            nuevaInscripcion.setEstadoInscripcion(Inscripcion.EstadoInscripcion.EN_CURSO);
+
             // Crear detalles de inscripción
             Set<DetalleInscripcion> detalles = new HashSet<>();
             inscripcionDto.getDetalles().forEach(detalleDto -> {
@@ -195,7 +200,8 @@ public class InscripcionController {
 
             // Guardar la nueva inscripción con detalles
             Inscripcion inscripcionRenovada = inscripcionService.renovarInscripcionConCambios(id, nuevaInscripcion, detalles);
-            return ResponseEntity.ok(inscripcionRenovada);
+            InscripcionInfoDto response = new InscripcionInfoDto(inscripcionRenovada);
+            return ResponseEntity.ok(response);
 
         } catch (IllegalArgumentException e) {
             return ResponseEntity

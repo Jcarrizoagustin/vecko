@@ -19,6 +19,8 @@ public interface InscripcionRepository extends JpaRepository<Inscripcion, Long> 
 
     List<Inscripcion> findByEstadoPago(Inscripcion.EstadoPago estadoPago);
 
+    List<Inscripcion> findAllByEstadoInscripcion(Inscripcion.EstadoInscripcion estadoInscripcion);
+
     @Query("SELECT i FROM Inscripcion i WHERE i.fechaFin BETWEEN :fechaInicio AND :fechaFin")
     List<Inscripcion> findByFechaFinBetween(@Param("fechaInicio") LocalDate fechaInicio,
                                             @Param("fechaFin") LocalDate fechaFin);

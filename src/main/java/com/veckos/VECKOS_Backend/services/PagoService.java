@@ -1,7 +1,10 @@
 package com.veckos.VECKOS_Backend.services;
 
+import com.veckos.VECKOS_Backend.entities.EventoAuditoria;
 import com.veckos.VECKOS_Backend.entities.Inscripcion;
 import com.veckos.VECKOS_Backend.entities.Pago;
+import com.veckos.VECKOS_Backend.enums.AccionEventoAuditoria;
+import com.veckos.VECKOS_Backend.factories.EventoAuditoriaFactory;
 import com.veckos.VECKOS_Backend.repositories.PagoRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +23,9 @@ public class PagoService {
 
     @Autowired
     private InscripcionService inscripcionService;
+
+    @Autowired
+    private EventoAuditoriaService eventoAuditoriaService;
 
     @Transactional(readOnly = true)
     public List<Pago> findAll() {
@@ -62,6 +68,8 @@ public class PagoService {
         // Actualizar la inscripción
         inscripcion.setEstadoPago(Inscripcion.EstadoPago.PAGA);
         inscripcion.setUltimoPago(pago.getFechaPago());
+        EventoAuditoria eventoAuditoria = EventoAuditoriaFactory.crearEvento(AccionEventoAuditoria.REGISTRAR_PAGO.getDescripcion(), "El monto registrado es de " + pagoPersistido.getMonto().toPlainString());
+        eventoAuditoriaService.guardarEventoAuditoria(eventoAuditoria);
         inscripcionService.update(inscripcionId, inscripcion);
 
         return pagoPersistido;
