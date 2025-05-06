@@ -19,6 +19,7 @@ public class ReporteAsistenciaIndividualDto {
 
     private Long usuarioId;
     private String nombreCompleto;
+    private String dni;
     private LocalDateTime fechaInicio;
     private LocalDateTime fechaFin;
     private Integer totalClasesProgramadas;

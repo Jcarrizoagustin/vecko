@@ -1,6 +1,7 @@
 package com.veckos.VECKOS_Backend.dtos.turno;
 
 import com.veckos.VECKOS_Backend.dtos.usuario.UsuarioInfoDto;
+import com.veckos.VECKOS_Backend.entities.Clase;
 import com.veckos.VECKOS_Backend.entities.Inscripcion;
 import com.veckos.VECKOS_Backend.entities.Turno;
 import lombok.AllArgsConstructor;
@@ -33,10 +34,28 @@ public class TurnoConUsuariosDto {
         this.cantidadUsuarios = usuarios.size();
     }
 
+    public TurnoConUsuariosDto(Turno turno, Long claseId) {
+        this.id = turno.getId();
+        this.diaSemana = turno.getDiaSemana();
+        this.hora = turno.getHora();
+        this.descripcion = turno.getDescripcion();
+        this.usuarios = this.obtenerUsuarios(turno,claseId);
+        this.cantidadUsuarios = usuarios.size();
+    }
+
     private List<UsuarioInfoDto> obtenerUsuarios(Turno turno){
         List<UsuarioInfoDto> response = turno.getDetallesInscripcion()
                 .stream()
                 .filter(detalleInscripcion -> detalleInscripcion.getInscripcion().getEstadoInscripcion().equals(Inscripcion.EstadoInscripcion.EN_CURSO))
+                .map(detalle -> new UsuarioInfoDto(detalle.getInscripcion().getUsuario())).toList();
+        return response;
+    }
+
+    private List<UsuarioInfoDto> obtenerUsuarios(Turno turno,Long claseId){
+        Clase clase = turno.getClases().stream().filter(clase1 -> clase1.getId().equals(claseId)).toList().get(0);
+        List<UsuarioInfoDto> response = turno.getDetallesInscripcion()
+                .stream()
+                .filter(detalleInscripcion -> detalleInscripcion.getInscripcion().getEstadoInscripcion().equals(Inscripcion.EstadoInscripcion.EN_CURSO) && !detalleInscripcion.getInscripcion().getFechaInicio().isAfter(clase.getFecha()))
                 .map(detalle -> new UsuarioInfoDto(detalle.getInscripcion().getUsuario())).toList();
         return response;
     }

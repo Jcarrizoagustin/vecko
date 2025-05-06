@@ -36,7 +36,9 @@ public class ClaseInfoDto {
         this.descripcion = clase.getDescripcion();
 
         if (clase.getAsistencias() != null) {
-            this.cantidadAsistencias = clase.getTurno().getDetallesInscripcion().size();
+            this.cantidadAsistencias = clase.getTurno().getDetallesInscripcion()
+                    .stream()
+                    .filter(detalleInscripcion -> !detalleInscripcion.getInscripcion().getFechaInicio().isAfter(clase.getFecha())).toList().size();
             this.cantidadPresentes = (int) clase.getAsistencias().stream()
                     .filter(a -> a.getPresente())
                     .count();

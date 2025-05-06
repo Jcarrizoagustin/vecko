@@ -55,6 +55,13 @@ public class TurnoController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/con-usuarios/{diaSemana}/{turnoId}/{claseId}")
+    public ResponseEntity<TurnoConUsuariosDto> getTurnosConUsuariosByDiaSemanaAndClaseId(@PathVariable DayOfWeek diaSemana, @PathVariable Long turnoId, @PathVariable Long claseId) {
+        Turno turno = turnoService.findTurnosByDiaSemanaConUsuariosPorClase(diaSemana,turnoId);
+        TurnoConUsuariosDto response = new TurnoConUsuariosDto(turno,claseId);
+        return ResponseEntity.ok(response);
+    }
+
     @GetMapping("/por-ocupacion")
     public ResponseEntity<List<TurnoDto>> getTurnosByOcupacion() {
         List<Turno> turnos = turnoService.findAllOrderByOcupacion();

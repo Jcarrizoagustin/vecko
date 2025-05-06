@@ -51,6 +51,9 @@ public class ReporteController {
     private ExcelExportService excelExportService;
 
     @Autowired
+    private PdfExportService pdfExportService;
+
+    @Autowired
     private UsuarioService usuarioService;
 
     @PostMapping("/asistencia")
@@ -61,6 +64,31 @@ public class ReporteController {
         }else{
             ReporteAsistenciaGeneralDto reporte = reporteService.generarReporteAsistenciaGeneral(requestDto);
             return ResponseEntity.ok(reporte);
+        }
+    }
+
+    @PostMapping("/asistencia/pdf")
+    public ResponseEntity<byte[]> generarReporteAsistenciaIndividualPdf(@RequestBody ReporteAsistenciaRequestDto requestDto) throws Exception {
+        try{
+            if(requestDto.getUsuarioId()!=null){
+                ReporteAsistenciaIndividualDto reporte = reporteService.generarReporteAsistenciaIndividual(requestDto);
+                byte[] pdfBytes = pdfExportService.generarReporteAsistenciaIndividual(reporte);
+                String fileName = "AsistenciaIndividual" + reporte.getNombreCompleto() + ".pdf";
+                return ResponseEntity.ok()
+                        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename="+ fileName)
+                        .contentType(MediaType.APPLICATION_PDF)
+                        .body(pdfBytes);
+            }else{
+                ReporteAsistenciaGeneralDto reporte = reporteService.generarReporteAsistenciaGeneral(requestDto);
+                byte[] pdfBytes = pdfExportService.generarReporteAsistenciaGeneral(reporte);
+                String fileName = "AsistenciaGeneral.pdf";
+                return ResponseEntity.ok()
+                        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename="+ fileName)
+                        .contentType(MediaType.APPLICATION_PDF)
+                        .body(pdfBytes);
+            }
+        }catch (Exception ex){
+            throw ex;
         }
     }
 

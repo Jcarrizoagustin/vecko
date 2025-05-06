@@ -34,7 +34,7 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
     List<Usuario> findConPagoProximoAVencer(@Param("fechaInicio") LocalDate fechaInicio,
                                             @Param("fechaFin") LocalDate fechaFin);
 
-    @Query("SELECT u FROM Usuario u JOIN u.inscripciones i WHERE i.estadoPago = 'ACTIVO' ")
+    @Query("SELECT u FROM Usuario u JOIN u.inscripciones i WHERE i.estadoInscripcion = 'EN_CURSO' ")
     List<Usuario> findUsuariosActivos();
 
     //@Query("SELECT u FROM Usuario u JOIN u.inscripciones i WHERE i.usuario is NULL ")

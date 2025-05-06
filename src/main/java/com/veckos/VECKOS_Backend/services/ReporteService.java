@@ -6,10 +6,7 @@ import com.veckos.VECKOS_Backend.dtos.reporte.ReporteAsistenciaGeneralDto;
 import com.veckos.VECKOS_Backend.dtos.reporte.ReporteAsistenciaIndividualDto;
 import com.veckos.VECKOS_Backend.dtos.reporte.ReporteAsistenciaRequestDto;
 import com.veckos.VECKOS_Backend.dtos.reporte.ReporteFinancieroDto;
-import com.veckos.VECKOS_Backend.entities.Asistencia;
-import com.veckos.VECKOS_Backend.entities.Clase;
-import com.veckos.VECKOS_Backend.entities.EventoAuditoria;
-import com.veckos.VECKOS_Backend.entities.Pago;
+import com.veckos.VECKOS_Backend.entities.*;
 import com.veckos.VECKOS_Backend.enums.AccionEventoAuditoria;
 import com.veckos.VECKOS_Backend.factories.EventoAuditoriaFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,6 +34,9 @@ public class ReporteService {
 
     @Autowired
     private EventoAuditoriaService eventoAuditoriaService;
+
+    @Autowired
+    private UsuarioService usuarioService;
 
     public ReporteFinancieroDto generarReporteFinanciero(LocalDate fechaInicio, LocalDate fechaFin,
                                                         boolean agruparPorMes, boolean agruparPorMetodoPago){
@@ -143,6 +143,10 @@ public class ReporteService {
         List<AsistenciaInfoDto> asistenciaInfo = asistencias.stream()
                         .map(AsistenciaInfoDto::new).toList();
         reporteAsistenciaIndividualDto.setAsistencias(asistenciaInfo);
+        Usuario usuario = usuarioService.findById(requestDto.getUsuarioId());
+        String nombreCompleto = usuario.getNombre() + " " + usuario.getApellido();
+        reporteAsistenciaIndividualDto.setNombreCompleto(nombreCompleto);
+        reporteAsistenciaIndividualDto.setDni(usuario.getDni());
         return reporteAsistenciaIndividualDto;
     }
 
@@ -154,6 +158,7 @@ public class ReporteService {
                 requestDto.getFechaInicio(),
                 requestDto.getFechaFin());
 
+        reporteGeneralDto.setTotalUsuarios(ranking.size());
         // Obtener total de asistencias en el período
         Long totalAsistencias = claseService.countAsistenciasTotalesEnPeriodo(
                 requestDto.getFechaInicio(),
@@ -163,7 +168,7 @@ public class ReporteService {
 
         Long clasesProgramadas = claseService.findByFechaBetween(requestDto.getFechaInicio(), requestDto.getFechaFin()).stream().count();
         reporteGeneralDto.setTotalClasesProgramadas(clasesProgramadas.intValue());
-        reporteGeneralDto.setPorcentajeAsistenciaPromedio(78.8);//TODO calcular porcentaje general
+        //reporteGeneralDto.setPorcentajeAsistenciaPromedio(78.8);//TODO calcular porcentaje general
 
         if (requestDto.getAgruparPorDia()) {
             // Implementar agrupación por día

@@ -4,6 +4,7 @@ import com.veckos.VECKOS_Backend.entities.Clase;
 import com.veckos.VECKOS_Backend.entities.DetalleInscripcion;
 import com.veckos.VECKOS_Backend.entities.Inscripcion;
 import com.veckos.VECKOS_Backend.entities.Turno;
+import com.veckos.VECKOS_Backend.enums.DescripcionTurno;
 import com.veckos.VECKOS_Backend.repositories.ClaseRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -110,6 +111,9 @@ public class ClaseService {
 
             // Buscar si hay un detalle para este día de la semana
             for (DetalleInscripcion detalle : detalles) {
+                if(detalle.getTurno().getDescripcion().equals(DescripcionTurno.AUXILIAR.name())){
+                    continue;
+                }
                 if (detalle.getDiaSemana() == diaSemanaActual) {
                     // Verificar si ya existe la clase para este turno y fecha
                     Optional<Clase> claseExistente = findByTurnoIdAndFecha(detalle.getTurno().getId(), fechaActual);

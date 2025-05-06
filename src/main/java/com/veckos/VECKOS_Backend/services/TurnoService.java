@@ -109,6 +109,11 @@ public class TurnoService {
     }
 
     @Transactional(readOnly = true)
+    public Turno findTurnosByDiaSemanaConUsuariosPorClase(DayOfWeek diaSemana, Long turnoId) {
+        return this.findById(turnoId);
+    }
+
+    @Transactional(readOnly = true)
     public List<Turno> findAllOrderByOcupacion() {
         return turnoRepository.findAllOrderByOcupacion();
     }

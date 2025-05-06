@@ -2,6 +2,7 @@ package com.veckos.VECKOS_Backend.services;
 
 import com.veckos.VECKOS_Backend.entities.*;
 import com.veckos.VECKOS_Backend.enums.AccionEventoAuditoria;
+import com.veckos.VECKOS_Backend.exceptions.NotFoundException;
 import com.veckos.VECKOS_Backend.factories.EventoAuditoriaFactory;
 import com.veckos.VECKOS_Backend.repositories.DetalleInscripcionRepository;
 import com.veckos.VECKOS_Backend.repositories.InscripcionRepository;
@@ -323,5 +324,13 @@ public class InscripcionService {
             }
         }
         System.out.println("Inscripciones completadas");
+    }
+
+    public String actualizarFecha(Long id, LocalDate fechaInicio, LocalDate fechaFin) {
+        Inscripcion inscripcion = this.inscripcionRepository.findById(id).orElseThrow(() -> new NotFoundException("No se encontro la entidad"));
+        inscripcion.setFechaInicio(fechaInicio);
+        inscripcion.setFechaFin(fechaFin);
+        inscripcionRepository.save(inscripcion);
+        return "Exito";
     }
 }

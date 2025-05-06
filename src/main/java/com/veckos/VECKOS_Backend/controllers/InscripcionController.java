@@ -8,6 +8,7 @@ import com.veckos.VECKOS_Backend.factories.EventoAuditoriaFactory;
 import com.veckos.VECKOS_Backend.services.*;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Random;
 import java.util.Set;
 
 @RestController
@@ -226,5 +228,12 @@ public class InscripcionController {
     public ResponseEntity<Void> actualizarEstadosPagos() {
         inscripcionService.actualizarEstadosPagos();
         return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/actualizar-fecha/{id}")
+    public ResponseEntity<String> actualizarFechaFin(@PathVariable Long id,
+                                                     @RequestParam(name = "fecha_inicio") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
+                                                     @RequestParam(name = "fecha_fin") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin){
+        return ResponseEntity.ok(inscripcionService.actualizarFecha(id, fechaInicio, fechaFin));
     }
 }
