@@ -46,6 +46,7 @@ public class Usuario {
     private LocalDateTime fechaAlta;
 
     @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OrderBy("id ASC")
     private List<Inscripcion> inscripciones = new ArrayList<>();
 
     // Métodos helper para relaciones bidireccionales
@@ -67,14 +68,13 @@ public class Usuario {
     * */
     public Inscripcion.EstadoPago obtenerEstado(){
         int size = this.inscripciones.size();
-        LocalDate hoy = LocalDate.now();
         if(size > 0){
-            //return this.inscripciones.get(size - 1).getEstadoPago();
-            return this.inscripciones.stream()
+           return this.inscripciones.get(size - 1).getEstadoPago();//Obtengo el estado pago de la ultima inscripcion
+            /*return this.inscripciones.stream()
                     .filter(inscripcion -> !hoy.isBefore(inscripcion.getFechaInicio()) && !hoy.isAfter(inscripcion.getFechaFin()))
                     .findFirst()
                     .orElseThrow(() -> new RuntimeException("No existe inscripcion en curso"))
-                    .getEstadoPago();
+                    .getEstadoPago();*/
         }
         return Inscripcion.EstadoPago.PENDIENTE;
     }
