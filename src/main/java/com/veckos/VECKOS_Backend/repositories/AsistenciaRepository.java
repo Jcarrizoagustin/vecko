@@ -1,6 +1,7 @@
 package com.veckos.VECKOS_Backend.repositories;
 
 import com.veckos.VECKOS_Backend.entities.Asistencia;
+import com.veckos.VECKOS_Backend.entities.Usuario;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -16,6 +17,8 @@ public interface AsistenciaRepository extends JpaRepository<Asistencia, Long> {
     List<Asistencia> findByUsuarioIdOrderByFechaRegistroDesc(Long usuarioId);
 
     List<Asistencia> findByClaseId(Long claseId);
+
+    List<Asistencia> findAllByUsuario(Usuario usuario);
 
     Optional<Asistencia> findByClaseIdAndUsuarioId(Long claseId, Long usuarioId);
 

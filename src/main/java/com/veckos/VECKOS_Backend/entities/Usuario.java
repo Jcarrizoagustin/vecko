@@ -81,7 +81,8 @@ public class Usuario {
 
     //Metodo para obtener una inscripcion activa, es decir EN CURSO
     public Inscripcion obtenerInscripcionActiva(){
-        return this.inscripciones.stream().filter(inscripcion -> inscripcion.getEstadoInscripcion().equals(Inscripcion.EstadoInscripcion.EN_CURSO))
+        return this.inscripciones.stream()
+                .filter(inscripcion -> inscripcion.getEstadoInscripcion().equals(Inscripcion.EstadoInscripcion.EN_CURSO))
                 .findFirst()
                 .orElse(null);
     }

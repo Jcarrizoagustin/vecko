@@ -1,11 +1,10 @@
 package com.veckos.VECKOS_Backend.services;
 
 import com.veckos.VECKOS_Backend.dtos.usuario.UsuarioListItemDto;
-import com.veckos.VECKOS_Backend.entities.EventoAuditoria;
-import com.veckos.VECKOS_Backend.entities.Inscripcion;
-import com.veckos.VECKOS_Backend.entities.Usuario;
+import com.veckos.VECKOS_Backend.entities.*;
 import com.veckos.VECKOS_Backend.enums.AccionEventoAuditoria;
 import com.veckos.VECKOS_Backend.enums.EstadoUsuario;
+import com.veckos.VECKOS_Backend.exceptions.NotFoundException;
 import com.veckos.VECKOS_Backend.factories.EventoAuditoriaFactory;
 import com.veckos.VECKOS_Backend.repositories.UsuarioRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -13,8 +12,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.swing.text.html.Option;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -27,6 +29,11 @@ public class UsuarioService {
     private UsuarioRepository usuarioRepository;
     @Autowired
     private EventoAuditoriaService eventoAuditoriaService;
+    @Autowired
+    private AsistenciaUsuarioService asistenciaUsuarioService;
+    @Autowired
+    private ClaseService claseService;
+
 
     @Transactional
     public List<UsuarioListItemDto> obtenerTodosLosUsuarios(){
@@ -67,9 +74,8 @@ public class UsuarioService {
         usuario.setTelefono(usuarioDetails.getTelefono());
         usuario.setCorreo(usuarioDetails.getCorreo());
         //usuario.setEstado(usuarioDetails.getEstado());
-
-        // No actualizamos DNI ni CUIL para evitar problemas de integridad
-
+        usuario.setDni(usuarioDetails.getDni());
+        usuario.setCuil(usuarioDetails.getCuil());
         return usuarioRepository.save(usuario);
     }
 
@@ -101,6 +107,47 @@ public class UsuarioService {
     @Transactional(readOnly = true)
     public List<Usuario> buscarPorTermino(String termino) {
         return usuarioRepository.buscarPorTermino(termino);
+    }
+
+    @Transactional
+    public Usuario ingresoPorDni(String dni) {
+        LocalDate hoy = LocalDate.now();
+        Usuario usuario = usuarioRepository.findByDni(dni).orElseThrow(() -> new NotFoundException("Usuario no encontrado"));
+        Inscripcion inscripcionActiva = usuario.obtenerInscripcionActiva();
+        if(inscripcionActiva != null){
+            //TODO registrar asistencia del dia
+            Optional<Asistencia> asistenciaOpt = asistenciaUsuarioService.findAllByUsuario(usuario)
+                    .stream().filter(asistencias -> asistencias.getClase().getFecha().equals(hoy))
+                    .findFirst();
+            if(asistenciaOpt.isPresent()){
+                Asistencia asistencia = asistenciaOpt.get();
+                asistencia.setPresente(true);
+                asistencia.setFechaRegistro(LocalDateTime.of(hoy, LocalTime.now()));
+                asistenciaUsuarioService.guardarAsistencia(asistencia);
+                EventoAuditoria eventoAuditoria = EventoAuditoriaFactory.crearEventoAuditoriaSystem(AccionEventoAuditoria.REGISTRO_ASISTENCIA.getDescripcion(), "Se registro la asistencia por ingreso del usuario " + usuario.getNombre() + " " + usuario.getApellido());
+                eventoAuditoriaService.guardarEventoAuditoria(eventoAuditoria);
+            }else{
+                //TODO crear asistencia si tiene clase este dia
+                List<DetalleInscripcion> detalles = inscripcionActiva.getDetalles();
+                Optional<DetalleInscripcion> detalle = detalles.stream().filter(detalleF -> hoy.getDayOfWeek().equals(detalleF.getDiaSemana())).findFirst();
+                if(detalle.isPresent()){
+                    Optional<Clase> claseOptional = detalle.get().getTurno().getClases().stream().filter(claseF -> claseF.getFecha().equals(hoy)).findFirst();
+                    if(claseOptional.isPresent()){
+                        Clase clase = claseOptional.get();
+                        Asistencia asistencia = new Asistencia();
+                        asistencia.setUsuario(usuario);
+                        asistencia.setPresente(true);
+                        asistencia.setFechaRegistro(LocalDateTime.of(hoy,LocalTime.now()));
+
+                        clase.addAsistencia(asistencia);
+                        claseService.guardarClase(clase);
+                        EventoAuditoria eventoAuditoria = EventoAuditoriaFactory.crearEventoAuditoriaSystem(AccionEventoAuditoria.REGISTRO_ASISTENCIA.getDescripcion(), "Se registro la asistencia por ingreso del usuario " + usuario.getNombre() + " " + usuario.getApellido());
+                        eventoAuditoriaService.guardarEventoAuditoria(eventoAuditoria);
+                    }
+                }
+            }
+        }
+        return usuario;
     }
 
     @Transactional(readOnly = true)

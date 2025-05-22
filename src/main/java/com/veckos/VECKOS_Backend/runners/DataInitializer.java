@@ -9,7 +9,6 @@ import com.veckos.VECKOS_Backend.repositories.UsuarioRepository;
 import com.veckos.VECKOS_Backend.security.repositories.RolRepository;
 import com.veckos.VECKOS_Backend.security.repositories.UsuarioSistemaRepository;
 import com.veckos.VECKOS_Backend.services.InscripcionService;
-import org.jfree.data.time.Week;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -57,18 +56,26 @@ public class DataInitializer implements CommandLineRunner {
 
             crearUsuarioProf();
 
+            iniciarlizarZonaHoraria();
+
+            //ajustarFechaFin();
+
             //crearUsuario();
 
             //crearPlan();
 
-           crearTurnos();
+           //crearTurnos();
 
-           // crearCuenta();
+           //crearCuenta();
 
             inscripcionService.completarInscripciones();
         }catch (Exception ex){
             System.out.print(ex.getMessage());
         }
+    }
+
+    private void ajustarFechaFin() {
+        inscripcionService.ajustarFechaInscripciones();
     }
 
     public void inicializarRoles() {
@@ -272,18 +279,22 @@ public class DataInitializer implements CommandLineRunner {
         }
     }
 
+    private void iniciarlizarZonaHoraria(){
+        TimeZone.setDefault(TimeZone.getTimeZone("America/Argentina/Buenos_Aires"));
+    }
+
     public void crearTurnos(){
         if(this.turnoRepository.findAll().size() == 0){
             try{
                 List<Turno> turnosList1 = generarTurnos(LocalTime.of(01,01), DescripcionTurno.AUXILIAR.name());
-                //List<Turno> turnosList2 = generarTurnos(LocalTime.of(10,00),"sistema");
-                //List<Turno> turnosList3 = generarTurnos(LocalTime.of(20,00),"sistema");
-                //List<Turno> turnosList4 = generarTurnos(LocalTime.of(21,00),"sistema");
+                List<Turno> turnosList2 = generarTurnos(LocalTime.of(10,00),"sistema");
+                List<Turno> turnosList3 = generarTurnos(LocalTime.of(20,00),"sistema");
+                List<Turno> turnosList4 = generarTurnos(LocalTime.of(21,00),"sistema");
 
                 this.turnoRepository.saveAll(turnosList1);
-                //this.turnoRepository.saveAll(turnosList2);
-                //this.turnoRepository.saveAll(turnosList3);
-                //this.turnoRepository.saveAll(turnosList4);
+                this.turnoRepository.saveAll(turnosList2);
+                this.turnoRepository.saveAll(turnosList3);
+                this.turnoRepository.saveAll(turnosList4);
 
                 System.out.println("Turnos creados correctamente.");
             }catch (Exception ex){

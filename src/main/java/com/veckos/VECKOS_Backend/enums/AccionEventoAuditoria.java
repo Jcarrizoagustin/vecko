@@ -7,7 +7,9 @@ public enum AccionEventoAuditoria {
     REGISTRAR_NUEVA_INSCRIPCION("Registro nueva inscripcion"),
     REGISTRAR_VENCIMIENTO_INSCRIPCION("Registro vencimiento inscripcion"),
     REGISTRAR_RENOVACION_INSCRIPCION("Registro renovacion automatica de inscripcion"),
-    GENERAR_INFORME_FINANCIERO("Genero informe financiero");
+    GENERAR_INFORME_FINANCIERO("Genero informe financiero"),
+    REGISTRO_ASISTENCIA("Registro asistencia"),
+    AJUSTE_INSCRIPCION("Ajuste fecha fin inscripcion");
 
     private AccionEventoAuditoria(String descripcion){
         this.descripcion = descripcion;

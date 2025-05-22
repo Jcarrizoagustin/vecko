@@ -134,4 +134,12 @@ public class AsistenciaService {
     public List<Object[]> findCantidadAsistenciaByFechaEnPeriodo(LocalDate fechaInicio, LocalDate fechaFin) {
         return asistenciaRepository.countAsistenciaByFechaEnPeriodo(fechaInicio, fechaFin);
     }
+
+    public List<Asistencia> findAllByUsuario(Usuario usuario){
+        return asistenciaRepository.findAllByUsuario(usuario);
+    }
+
+    public void guardarAsistencia(Asistencia asistencia){
+        asistenciaRepository.save(asistencia);
+    }
 }

@@ -333,4 +333,36 @@ public class InscripcionService {
         inscripcionRepository.save(inscripcion);
         return "Exito";
     }
+
+    public void descontarDiasAInscripcion(Inscripcion inscripcion, LocalDate fecha) {
+        inscripcion.setFechaFin(fecha.plusMonths(1));
+        inscripcionRepository.save(inscripcion);
+    }
+
+    public List<Inscripcion> buscarInscripcionesEnCurso() {
+        return this.inscripcionRepository.findAllByEstadoInscripcion(Inscripcion.EstadoInscripcion.EN_CURSO);
+    }
+
+    public void guardarInscripcion(Inscripcion inscripcion) {
+        this.inscripcionRepository.save(inscripcion);
+    }
+
+    @Transactional
+    public void ajustarFechaInscripciones(){
+        List<Inscripcion> inscripcionList = buscarInscripcionesEnCurso();
+        if(!inscripcionList.isEmpty()){
+            for(Inscripcion inscripcion : inscripcionList){
+                Optional<Pago> pagoOpt = inscripcion.getPagos().stream().findFirst();
+                if(pagoOpt.isPresent()){
+                    Pago pago = pagoOpt.get();
+                    if(pago.getFechaPago().isBefore(inscripcion.getFechaInicio())){
+                        inscripcion.setFechaFin(pago.getFechaPago().plusMonths(1));
+                        guardarInscripcion(inscripcion);
+                        EventoAuditoria eventoAuditoria = EventoAuditoriaFactory.crearEventoAuditoriaSystem(AccionEventoAuditoria.AJUSTE_INSCRIPCION.getDescripcion(),"Se ajusto la fecha de fin de inscripcion al usuario " + inscripcion.getUsuario().getNombre() + " " + inscripcion.getUsuario().getApellido() + " al dia " + pago.getFechaPago().plusMonths(1));
+                        eventoAuditoriaService.guardarEventoAuditoria(eventoAuditoria);
+                    }
+                }
+            }
+        }
+    }
 }

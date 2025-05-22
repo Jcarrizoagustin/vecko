@@ -1,5 +1,6 @@
 package com.veckos.VECKOS_Backend.services;
 
+import com.veckos.VECKOS_Backend.entities.Clase;
 import com.veckos.VECKOS_Backend.entities.EventoAuditoria;
 import com.veckos.VECKOS_Backend.entities.Inscripcion;
 import com.veckos.VECKOS_Backend.entities.Pago;
@@ -26,6 +27,9 @@ public class PagoService {
 
     @Autowired
     private EventoAuditoriaService eventoAuditoriaService;
+
+    @Autowired
+    private ClaseService claseService;
 
     @Transactional(readOnly = true)
     public List<Pago> findAll() {
@@ -70,7 +74,11 @@ public class PagoService {
         inscripcion.setUltimoPago(pago.getFechaPago());
         EventoAuditoria eventoAuditoria = EventoAuditoriaFactory.crearEvento(AccionEventoAuditoria.REGISTRAR_PAGO.getDescripcion(), "El monto registrado es de " + pagoPersistido.getMonto().toPlainString());
         eventoAuditoriaService.guardarEventoAuditoria(eventoAuditoria);
-        inscripcionService.update(inscripcionId, inscripcion);
+        //inscripcionService.update(inscripcionId, inscripcion);
+        if(pago.getFechaPago().isBefore(LocalDate.now())){
+            this.inscripcionService.descontarDiasAInscripcion(inscripcion, pago.getFechaPago());
+        }
+        //List<Clase> clasesGeneradas = claseService.generarClasesParaInscripcion(inscripcion);
 
         return pagoPersistido;
     }

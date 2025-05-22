@@ -1,9 +1,6 @@
 package com.veckos.VECKOS_Backend.services;
 
-import com.veckos.VECKOS_Backend.entities.Clase;
-import com.veckos.VECKOS_Backend.entities.DetalleInscripcion;
-import com.veckos.VECKOS_Backend.entities.Inscripcion;
-import com.veckos.VECKOS_Backend.entities.Turno;
+import com.veckos.VECKOS_Backend.entities.*;
 import com.veckos.VECKOS_Backend.enums.DescripcionTurno;
 import com.veckos.VECKOS_Backend.repositories.ClaseRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -59,6 +56,10 @@ public class ClaseService {
         clase.setTurno(turno);
 
         return claseRepository.save(clase);
+    }
+
+    public Clase guardarClase(Clase clase){
+        return this.claseRepository.save(clase);
     }
 
     @Transactional
@@ -125,11 +126,31 @@ public class ClaseService {
                         nuevaClase.setFecha(fechaActual);
                         nuevaClase.setDescripcion("Clase generada automáticamente");
 
+                        //Asistencias
+                        Asistencia asistencia = new Asistencia();
+                        asistencia.setUsuario(inscripcion.getUsuario());
+                        asistencia.setPresente(false);
+                        asistencia.setFechaRegistro(fechaActual.atStartOfDay());
+
+                        nuevaClase.addAsistencia(asistencia);
                         Clase claseGuardada = claseRepository.save(nuevaClase);
                         clasesGeneradas.add(claseGuardada);
                     } else {
                         // Si ya existe, agregarla a la lista de generadas
-                        clasesGeneradas.add(claseExistente.get());
+                        Clase claseExiste = claseExistente.get();
+                        Optional<Asistencia> asistenciaOpt = claseExiste.getAsistencias().stream().filter(asistencia -> asistencia.getUsuario().getId().equals(inscripcion.getUsuario().getId())).findFirst();
+                        if(asistenciaOpt.isEmpty()){
+                            Asistencia asistencia = new Asistencia();
+                            asistencia.setUsuario(inscripcion.getUsuario());
+                            asistencia.setPresente(false);
+                            asistencia.setFechaRegistro(fechaActual.atStartOfDay());
+
+                            claseExiste.addAsistencia(asistencia);
+                            Clase claseGuardada = claseRepository.save(claseExiste);
+                        }
+
+
+                        clasesGeneradas.add(claseExiste);
                     }
                 }
             }

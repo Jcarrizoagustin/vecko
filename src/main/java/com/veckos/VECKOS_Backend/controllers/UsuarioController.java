@@ -82,6 +82,27 @@ public class UsuarioController {
         return ResponseEntity.ok(usuariosDto);
     }
 
+    @GetMapping("/ingreso")
+    public ResponseEntity<UsuarioDetalleDto> ingresoPorDni(@RequestParam String dni) {
+        Usuario usuario = usuarioService.ingresoPorDni(dni);
+        if(usuario.getInscripciones().size() > 0){
+            Inscripcion inscripcion = usuario.obtenerInscripcionActiva();
+            if(Objects.nonNull(inscripcion)){
+                InscripcionInfoDto inscripcionInfoDto = new InscripcionInfoDto(inscripcion);
+                UsuarioDetalleDto response = new UsuarioDetalleDto(usuario,inscripcionInfoDto);
+                return ResponseEntity.ok(response);
+            }else{
+                inscripcion =usuario.getInscripciones().get(usuario.getInscripciones().size() - 1);
+                InscripcionInfoDto inscripcionInfoDto = new InscripcionInfoDto(inscripcion);
+                UsuarioDetalleDto response = new UsuarioDetalleDto(usuario,inscripcionInfoDto);
+                return ResponseEntity.ok(response);
+            }
+        }else{
+            UsuarioDetalleDto response = new UsuarioDetalleDto(usuario,null);
+            return ResponseEntity.ok(response);
+        }
+    }
+
     @PostMapping
     public ResponseEntity<UsuarioDto> createUsuario(@Valid @RequestBody UsuarioDto usuarioDto) {
         // Verificar si ya existe un usuario con el mismo DNI
