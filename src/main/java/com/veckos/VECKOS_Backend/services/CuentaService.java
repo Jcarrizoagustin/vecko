@@ -61,4 +61,9 @@ public class CuentaService {
             throw new RuntimeException("No existe la cuenta con ID: " + id);
         }
     }
+
+    public Cuenta cuentaPorIdOrNull(Long cuentaId){
+        if(cuentaId == null) return null;
+        return this.cuentaRepository.findById(cuentaId).orElse(null);
+    }
 }

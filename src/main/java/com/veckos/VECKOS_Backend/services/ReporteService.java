@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -33,13 +34,16 @@ public class ReporteService {
     private PagoService pagoService;
 
     @Autowired
+    private CuentaService cuentaService;
+
+    @Autowired
     private EventoAuditoriaService eventoAuditoriaService;
 
     @Autowired
     private UsuarioService usuarioService;
 
     public ReporteFinancieroDto generarReporteFinanciero(LocalDate fechaInicio, LocalDate fechaFin,
-                                                        boolean agruparPorMes, boolean agruparPorMetodoPago){
+                                                        boolean agruparPorMes, boolean agruparPorMetodoPago, Long cuentaId){
 
         //Map<String, Object> reporte = new HashMap<>();
         ReporteFinancieroDto reporteFinancieroDto = new ReporteFinancieroDto();
@@ -52,11 +56,24 @@ public class ReporteService {
 
         // Obtener pagos en el período
         List<Pago> pagos = pagoService.findByFechaPagoBetween(fechaInicio, fechaFin);
+        if(cuentaId != null){
+            if(cuentaId == 0){
+                pagos = pagos.stream().
+                        filter(pago -> pago.getMetodoPago().equals(Pago.MetodoPago.EFECTIVO)).toList();
+            }else {
+                pagos = pagos.stream().
+                        filter(pago -> pago.getCuenta() != null && pago.getCuenta().getId().equals(cuentaId)).toList();
+            }
+        }
+        BigDecimal total = pagos.stream()
+                .map(Pago::getMonto)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
         List<PagoInfoDto> pagoInfoDtos = pagos.stream()
                 .map(PagoInfoDto::new).toList();
 
         // Calcular suma total
-        BigDecimal total = pagoService.sumMontoByFechaPagoBetween(fechaInicio, fechaFin);
+        //BigDecimal total = pagoService.sumMontoByFechaPagoBetween(fechaInicio, fechaFin);
 
         // Añadir datos al reporte
         //reporte.put("cantidadPagos", pagos.size());
@@ -65,8 +82,8 @@ public class ReporteService {
         reporteFinancieroDto.setIngresoTotal(total);
 
         // Calcular promedio si hay pagos
-        if (pagos.size() > 0) {
-            BigDecimal promedio = total.divide(BigDecimal.valueOf(pagos.size()), 2, BigDecimal.ROUND_HALF_UP);
+        if (!pagos.isEmpty()) {
+            BigDecimal promedio = total.divide(BigDecimal.valueOf(pagos.size()), 2, RoundingMode.HALF_UP);
             reporteFinancieroDto.setMontoPromedio(promedio);
             //reporte.put("montoPromedio", promedio);
         } else {
@@ -83,8 +100,11 @@ public class ReporteService {
 
         // Agrupar por método de pago si se solicita
         if (agruparPorMetodoPago) {
-            List<Object[]> ingresosPorMetodo = pagoService.countPagosByMetodoPagoAndFechaPagoBetween(fechaInicio, fechaFin);
+            Pago.MetodoPago metodoPago = (cuentaId == null) ? null : (cuentaId == 0) ?  Pago.MetodoPago.EFECTIVO : Pago.MetodoPago.TRANSFERENCIA;
+            Cuenta cuenta = cuentaService.cuentaPorIdOrNull(cuentaId);
+            List<Object[]> ingresosPorMetodo = pagoService.countPagosByMetodoPagoAndFechaPagoBetween2(fechaInicio, fechaFin,metodoPago,cuenta);
             //reporte.put("ingresosPorMetodoPago", ingresosPorMetodo);
+
             reporteFinancieroDto.setIngresosPorMetodoPago(ingresosPorMetodo);
         }
 

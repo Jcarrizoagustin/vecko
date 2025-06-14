@@ -97,9 +97,10 @@ public class ReporteController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin,
             @RequestParam(required = false, defaultValue = "false") Boolean agruparPorMes,
-            @RequestParam(required = false, defaultValue = "false") Boolean agruparPorMetodoPago) {
+            @RequestParam(required = false, defaultValue = "false") Boolean agruparPorMetodoPago,
+            @RequestParam(required = false) Long cuentaId) {
 
-        ReporteFinancieroDto reporte = reporteService.generarReporteFinanciero(fechaInicio, fechaFin, agruparPorMes,agruparPorMetodoPago);
+        ReporteFinancieroDto reporte = reporteService.generarReporteFinanciero(fechaInicio, fechaFin, agruparPorMes,agruparPorMetodoPago,cuentaId);
 
         return ResponseEntity.ok(reporte);
     }
@@ -107,9 +108,10 @@ public class ReporteController {
     @GetMapping("/financiero/excel/periodo")
     public ResponseEntity<byte[]> exportarPagosPorPeriodoExcel(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin) {
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin,
+            @RequestParam(required = false) Long cuentaId) {
         try {
-            ReporteFinancieroDto reporte = reporteService.generarReporteFinanciero(fechaInicio, fechaFin, false,false);
+            ReporteFinancieroDto reporte = reporteService.generarReporteFinanciero(fechaInicio, fechaFin, false,false,cuentaId);
             byte[] excelBytes = excelExportService.exportPagosToExcel(reporte);
 
             HttpHeaders headers = new HttpHeaders();

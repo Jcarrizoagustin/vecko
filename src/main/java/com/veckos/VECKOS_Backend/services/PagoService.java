@@ -1,9 +1,6 @@
 package com.veckos.VECKOS_Backend.services;
 
-import com.veckos.VECKOS_Backend.entities.Clase;
-import com.veckos.VECKOS_Backend.entities.EventoAuditoria;
-import com.veckos.VECKOS_Backend.entities.Inscripcion;
-import com.veckos.VECKOS_Backend.entities.Pago;
+import com.veckos.VECKOS_Backend.entities.*;
 import com.veckos.VECKOS_Backend.enums.AccionEventoAuditoria;
 import com.veckos.VECKOS_Backend.factories.EventoAuditoriaFactory;
 import com.veckos.VECKOS_Backend.repositories.PagoRepository;
@@ -139,6 +136,11 @@ public class PagoService {
     @Transactional(readOnly = true)
     public List<Object[]> countPagosByMetodoPagoAndFechaPagoBetween(LocalDate fechaInicio, LocalDate fechaFin) {
         return pagoRepository.sumPagosByMetodoPagoAndFechaPagoBetween(fechaInicio, fechaFin);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Object[]> countPagosByMetodoPagoAndFechaPagoBetween2(LocalDate fechaInicio, LocalDate fechaFin, Pago.MetodoPago metodoPago , Cuenta cuenta ) {
+        return pagoRepository.sumPagosByMetodoPagoAndFechaPagoBetween2(fechaInicio, fechaFin,metodoPago,cuenta);
     }
 
     @Transactional(readOnly = true)

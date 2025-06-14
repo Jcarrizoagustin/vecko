@@ -1,5 +1,6 @@
 package com.veckos.VECKOS_Backend.repositories;
 
+import com.veckos.VECKOS_Backend.entities.Cuenta;
 import com.veckos.VECKOS_Backend.entities.Pago;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -30,6 +31,17 @@ public interface PagoRepository extends JpaRepository<Pago, Long> {
     List<Object[]> sumPagosByMetodoPagoAndFechaPagoBetween(
             @Param("fechaInicio") LocalDate fechaInicio,
             @Param("fechaFin") LocalDate fechaFin);
+
+    @Query("SELECT p.metodoPago, SUM(p.monto) FROM Pago p " +
+            "WHERE p.fechaPago BETWEEN :fechaInicio AND :fechaFin " +
+            "AND (:metodoPago IS NULL OR p.metodoPago = :metodoPago) " +
+            "AND (:cuenta IS NULL OR p.cuenta = :cuenta) " +
+            "GROUP BY p.metodoPago")
+    List<Object[]> sumPagosByMetodoPagoAndFechaPagoBetween2(
+            @Param("fechaInicio") LocalDate fechaInicio,
+            @Param("fechaFin") LocalDate fechaFin,
+            @Param("metodoPago") Pago.MetodoPago metodoPago,
+            @Param("cuenta") Cuenta cuenta);
 
     @Query("SELECT FUNCTION('YEAR', p.fechaPago) as anio, " +
             "FUNCTION('MONTH', p.fechaPago) as mes, " +
