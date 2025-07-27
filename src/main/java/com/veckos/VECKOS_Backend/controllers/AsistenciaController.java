@@ -24,33 +24,22 @@ public class AsistenciaController {
 
     @GetMapping
     public ResponseEntity<List<AsistenciaInfoDto>> getAllAsistencias() {
-        List<Asistencia> asistencias = asistenciaService.findAll();
-        List<AsistenciaInfoDto> response = asistencias.stream()
-                .map(AsistenciaInfoDto::new).toList();
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(asistenciaService.findAll());
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<AsistenciaInfoDto> getAsistenciaById(@PathVariable Long id) {
-        Asistencia asistencia = asistenciaService.findById(id);
-        AsistenciaInfoDto asistenciaInfoDto = new AsistenciaInfoDto(asistencia);
-        return ResponseEntity.ok(asistenciaInfoDto);
+        return ResponseEntity.ok(asistenciaService.findById(id));
     }
 
     @GetMapping("/usuario/{usuarioId}")
     public ResponseEntity<List<AsistenciaInfoDto>> getAsistenciasByUsuarioId(@PathVariable Long usuarioId) {
-        List<Asistencia> asistencias = asistenciaService.findByUsuarioId(usuarioId);
-        List<AsistenciaInfoDto> response = asistencias.stream()
-                .map(AsistenciaInfoDto::new).toList();
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(asistenciaService.findByUsuarioId(usuarioId));
     }
 
     @GetMapping("/clase/{claseId}")
     public ResponseEntity<List<AsistenciaInfoDto>> getAsistenciasByClaseId(@PathVariable Long claseId) {
-        List<Asistencia> asistencias = asistenciaService.findByClaseId(claseId);
-        List<AsistenciaInfoDto> response = asistencias.stream()
-                .map(AsistenciaInfoDto::new).toList();
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(asistenciaService.findByClaseId(claseId));
     }
 
     @GetMapping("/usuario/{usuarioId}/fecha")
@@ -58,10 +47,7 @@ public class AsistenciaController {
             @PathVariable Long usuarioId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin) {
-        List<Asistencia> asistencias = asistenciaService.findByUsuarioIdAndFechaBetween(usuarioId, fechaInicio, fechaFin);
-        List<AsistenciaInfoDto> response = asistencias.stream()
-                .map(AsistenciaInfoDto::new).toList();
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(asistenciaService.findByUsuarioIdAndFechaBetween(usuarioId, fechaInicio, fechaFin));
     }
 
     @PostMapping

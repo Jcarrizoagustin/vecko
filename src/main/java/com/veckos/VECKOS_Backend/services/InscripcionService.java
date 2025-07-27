@@ -25,9 +25,6 @@ public class InscripcionService {
     private InscripcionRepository inscripcionRepository;
 
     @Autowired
-    private UsuarioService usuarioService;
-
-    @Autowired
     private PlanService planService;
 
     @Autowired
@@ -38,6 +35,9 @@ public class InscripcionService {
 
     @Autowired
     private EventoAuditoriaService eventoAuditoriaService;
+
+    @Autowired
+    private UsuarioEliminadoService usuarioEliminadoService;
 
     @Transactional(readOnly = true)
     public List<Inscripcion> findAll() {
@@ -246,7 +246,7 @@ public class InscripcionService {
         completarInscripcion(inscripcion);
     }
 
-    private void completarInscripcion(Inscripcion inscripcion) {
+    public void completarInscripcion(Inscripcion inscripcion) {
         if(inscripcion.getEstadoInscripcion().equals(Inscripcion.EstadoInscripcion.EN_CURSO)){
             inscripcion.setEstadoInscripcion(Inscripcion.EstadoInscripcion.COMPLETADA);
             cancelarDetalleInscripcion(inscripcion);
@@ -314,6 +314,9 @@ public class InscripcionService {
         List<Inscripcion> inscripcionesEnCurso = this.inscripcionRepository.findAllByEstadoInscripcion(Inscripcion.EstadoInscripcion.EN_CURSO);
         LocalDate hoy = LocalDate.now();
         for (Inscripcion inscripcion : inscripcionesEnCurso) {
+            if(usuarioEliminadoService.existUsuarioEliminado(inscripcion.getUsuario())){
+                continue;
+            }
             if (inscripcion.getFechaFin().equals(hoy) || inscripcion.getFechaFin().isBefore(hoy)) {
                 try{
                     renovarInscripcion(inscripcion);

@@ -7,6 +7,8 @@ import com.veckos.VECKOS_Backend.dtos.usuario.UsuarioListItemDto;
 import com.veckos.VECKOS_Backend.entities.Inscripcion;
 import com.veckos.VECKOS_Backend.entities.Usuario;
 import com.veckos.VECKOS_Backend.exceptions.BadRequestException;
+import com.veckos.VECKOS_Backend.exceptions.NotFoundException;
+import com.veckos.VECKOS_Backend.services.UsuarioEliminadoService;
 import com.veckos.VECKOS_Backend.services.UsuarioService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RestController
@@ -25,6 +28,9 @@ public class UsuarioController {
 
     @Autowired
     private UsuarioService usuarioService;
+
+    @Autowired
+    private UsuarioEliminadoService usuarioEliminadoService;
 
     @GetMapping
     public ResponseEntity<List<UsuarioListItemDto>> getAllUsuarios() {
@@ -58,11 +64,21 @@ public class UsuarioController {
             if(Objects.nonNull(inscripcion)){
                 InscripcionInfoDto inscripcionInfoDto = new InscripcionInfoDto(inscripcion);
                 UsuarioDetalleDto response = new UsuarioDetalleDto(usuario,inscripcionInfoDto);
+                if(usuarioEliminadoService.existUsuarioEliminado(usuario)){
+                    response.setEliminado(true);
+                }else{
+                    response.setEliminado(false);
+                }
                 return ResponseEntity.ok(response);
             }else{
                 inscripcion =usuario.getInscripciones().get(usuario.getInscripciones().size() - 1);
                 InscripcionInfoDto inscripcionInfoDto = new InscripcionInfoDto(inscripcion);
                 UsuarioDetalleDto response = new UsuarioDetalleDto(usuario,inscripcionInfoDto);
+                if(usuarioEliminadoService.existUsuarioEliminado(usuario)){
+                    response.setEliminado(true);
+                }else{
+                    response.setEliminado(false);
+                }
                 return ResponseEntity.ok(response);
             }
         }else{
@@ -107,7 +123,19 @@ public class UsuarioController {
     public ResponseEntity<UsuarioDto> createUsuario(@Valid @RequestBody UsuarioDto usuarioDto) {
         // Verificar si ya existe un usuario con el mismo DNI
         if (usuarioService.existsByDni(usuarioDto.getDni())) {
-            throw new BadRequestException("El usuario con dni " + usuarioDto.getDni() + " ya existe");
+            Usuario usuario = usuarioService.findByDni(usuarioDto.getDni()).orElseThrow(() -> new NotFoundException("Ocurrio un error: Usuario no encontrado"));
+            if(usuarioEliminadoService.existUsuarioEliminado(usuario)){
+                usuarioEliminadoService.eliminarUsuarioEliminado(usuario);
+                //usuario.setId(usuarioDto.getId());
+                usuario.setNombre(usuarioDto.getNombre());
+                usuario.setApellido(usuarioDto.getApellido());
+                usuario.setFechaNacimiento(usuarioDto.getFechaNacimiento());
+                usuario.setCuil(usuarioDto.getCuil());
+                usuario.setTelefono(usuarioDto.getTelefono());
+                usuario.setCorreo(usuarioDto.getCorreo());
+                Usuario savedUsuario = usuarioService.save(usuario);
+                return new ResponseEntity<>(convertToDto(savedUsuario), HttpStatus.CREATED);
+            }
         }
 
         Usuario usuario = convertToEntity(usuarioDto);

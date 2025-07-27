@@ -12,8 +12,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.swing.text.html.Option;
-import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -33,12 +31,17 @@ public class UsuarioService {
     private AsistenciaUsuarioService asistenciaUsuarioService;
     @Autowired
     private ClaseService claseService;
+    @Autowired
+    private UsuarioEliminadoService usuarioEliminadoService;
+    @Autowired
+    private InscripcionService inscripcionService;
 
 
     @Transactional
     public List<UsuarioListItemDto> obtenerTodosLosUsuarios(){
         List<Usuario> usuarios = usuarioRepository.findAll();
         return usuarios.stream()
+                .filter(usuario -> !usuarioEliminadoService.existUsuarioEliminado(usuario))
                 .map(UsuarioListItemDto::new)
                 .collect(Collectors.toList());
     }
@@ -81,10 +84,16 @@ public class UsuarioService {
 
     @Transactional
     public void deleteById(Long id) {
-        Usuario usuario = findById(id);
-        //usuario.setEstado(Usuario.EstadoUsuario.INACTIVO);
-        usuarioRepository.save(usuario);
-        // No eliminamos físicamente para mantener la integridad de los datos
+        try{
+            Usuario usuario = findById(id);
+            if(usuario.obtenerInscripcionActiva() != null){
+                inscripcionService.completarInscripcion(usuario.obtenerInscripcionActiva());
+            }
+            UsuarioEliminado usuarioEliminado = usuarioEliminadoService.eliminarUsuario(usuario);
+        }catch (Exception ex){
+            EventoAuditoria evento = EventoAuditoriaFactory.crearEvento(AccionEventoAuditoria.ELIMINAR_USUARIO.getDescripcion(),
+                    "Ocurrio un error al eliminar el usuario con ID: " + id);
+        }
     }
 
     /*@Transactional(readOnly = true)
@@ -113,6 +122,9 @@ public class UsuarioService {
     public Usuario ingresoPorDni(String dni) {
         LocalDate hoy = LocalDate.now();
         Usuario usuario = usuarioRepository.findByDni(dni).orElseThrow(() -> new NotFoundException("Usuario no encontrado"));
+        if(usuarioEliminadoService.existUsuarioEliminado(usuario)){
+            throw new NotFoundException("Usuario no encontrado");
+        }
         Inscripcion inscripcionActiva = usuario.obtenerInscripcionActiva();
         if(inscripcionActiva != null){
             //TODO registrar asistencia del dia

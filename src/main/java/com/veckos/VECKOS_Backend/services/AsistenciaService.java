@@ -1,9 +1,11 @@
 package com.veckos.VECKOS_Backend.services;
 
+import com.veckos.VECKOS_Backend.dtos.asistencia.AsistenciaInfoDto;
 import com.veckos.VECKOS_Backend.dtos.asistencia.AsistenciaPorClaseRegistrarDto;
 import com.veckos.VECKOS_Backend.entities.Asistencia;
 import com.veckos.VECKOS_Backend.entities.Clase;
 import com.veckos.VECKOS_Backend.entities.Usuario;
+import com.veckos.VECKOS_Backend.mappers.AsistenciaMapper;
 import com.veckos.VECKOS_Backend.repositories.AsistenciaRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,24 +30,28 @@ public class AsistenciaService {
     private UsuarioService usuarioService;
 
     @Transactional(readOnly = true)
-    public List<Asistencia> findAll() {
-        return asistenciaRepository.findAll();
+    public List<AsistenciaInfoDto> findAll() {
+        List<Asistencia> asistencias = asistenciaRepository.findAll();
+        return AsistenciaMapper.asistenciasListToAsistenciaInfoDto(asistencias);
     }
 
     @Transactional(readOnly = true)
-    public Asistencia findById(Long id) {
-        return asistenciaRepository.findById(id)
+    public AsistenciaInfoDto findById(Long id) {
+        Asistencia asistencia = asistenciaRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Asistencia no encontrada con ID: " + id));
+        return AsistenciaMapper.asistenciaToAsistenciaInfoDto(asistencia);
     }
 
     @Transactional(readOnly = true)
-    public List<Asistencia> findByUsuarioId(Long usuarioId) {
-        return asistenciaRepository.findByUsuarioIdOrderByFechaRegistroDesc(usuarioId);
+    public List<AsistenciaInfoDto> findByUsuarioId(Long usuarioId) {
+        List<Asistencia> asistencias = asistenciaRepository.findByUsuarioIdOrderByFechaRegistroDesc(usuarioId);
+        return AsistenciaMapper.asistenciasListToAsistenciaInfoDto(asistencias);
     }
 
     @Transactional(readOnly = true)
-    public List<Asistencia> findByClaseId(Long claseId) {
-        return asistenciaRepository.findByClaseId(claseId);
+    public List<AsistenciaInfoDto> findByClaseId(Long claseId) {
+        List<Asistencia> asistencias = asistenciaRepository.findByClaseId(claseId);
+        return AsistenciaMapper.asistenciasListToAsistenciaInfoDto(asistencias);
     }
 
     @Transactional(readOnly = true)
@@ -116,7 +122,13 @@ public class AsistenciaService {
     }
 
     @Transactional(readOnly = true)
-    public List<Asistencia> findByUsuarioIdAndFechaBetween(Long usuarioId, LocalDate fechaInicio, LocalDate fechaFin) {
+    public List<AsistenciaInfoDto> findByUsuarioIdAndFechaBetween(Long usuarioId, LocalDate fechaInicio, LocalDate fechaFin) {
+        List<Asistencia> asistencias =  asistenciaRepository.findByUsuarioIdAndFechaBetween(usuarioId, fechaInicio, fechaFin);
+        return AsistenciaMapper.asistenciasListToAsistenciaInfoDto(asistencias);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Asistencia> findByUsuarioIdAndFechaBetweenToAsistenciaList(Long usuarioId, LocalDate fechaInicio, LocalDate fechaFin) {
         return asistenciaRepository.findByUsuarioIdAndFechaBetween(usuarioId, fechaInicio, fechaFin);
     }
 

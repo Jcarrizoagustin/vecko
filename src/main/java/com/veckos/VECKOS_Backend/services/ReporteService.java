@@ -124,7 +124,7 @@ public class ReporteService {
         reporteAsistenciaIndividualDto.setFechaInicio(requestDto.getFechaInicio().atStartOfDay());
         reporteAsistenciaIndividualDto.setFechaFin(requestDto.getFechaFin().atStartOfDay());
         // Obtener asistencias del usuario en el período
-        List<Asistencia> asistencias = asistenciaService.findByUsuarioIdAndFechaBetween(
+        List<Asistencia> asistencias = asistenciaService.findByUsuarioIdAndFechaBetweenToAsistenciaList(
                 requestDto.getUsuarioId(),
                 requestDto.getFechaInicio(),
                 requestDto.getFechaFin());

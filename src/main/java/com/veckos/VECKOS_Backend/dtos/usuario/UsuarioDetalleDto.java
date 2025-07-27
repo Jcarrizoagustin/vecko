@@ -27,6 +27,7 @@ public class UsuarioDetalleDto {
     private LocalDateTime fechaAlta;
     private InscripcionInfoDto inscripcionActiva;
     private EstadoUsuario estadoUsuario;
+    private boolean eliminado;
 
     // Información adicional calculada
     private Integer edad;
